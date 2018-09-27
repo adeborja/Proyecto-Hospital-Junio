@@ -1,0 +1,27 @@
+package Hospital;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+public class conductorMetodosPaciente {
+	public static void main(String[] args){
+		
+		int codigo = -10;
+		String usuario = "UsuarioModificador", usuarioConsultor = "UsuarioConsultor", pass="123";
+		Paciente p1 = null;
+		Calendar fecha = new GregorianCalendar();
+		Date date = new Date(); date.setTime(fecha.getTimeInMillis());
+		
+		MetodosPaciente consultor = new MetodosPaciente(usuarioConsultor, pass);
+		MetodosPaciente modificador = new MetodosPaciente(usuario, pass);
+		
+		fecha.set(1995, 10, 22);
+		
+		System.out.println(fecha.get(fecha.YEAR));
+		
+		//ESCRIBIR PACIENTE
+		
+		
+	}
+}

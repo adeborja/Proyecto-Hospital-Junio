@@ -1,0 +1,9 @@
+package Hospital;
+
+public class conductorMetodosPaciente {
+	public static void main(String[] args){
+		
+		
+		
+	}
+}

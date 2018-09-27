@@ -1,0 +1,46 @@
+package Hospital;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+public class conductorMetodosPaciente {
+	public static void main(String[] args){
+		
+		int codigo = -10;
+		String usuario = "UsuarioModificador", usuarioConsultor = "UsuarioConsultor", pass="123";
+		Paciente p1 = null;
+		Calendar fecha = new GregorianCalendar();
+		//Date date = new Date(); date.setTime(fecha.getTimeInMillis());
+		
+		MetodosPaciente consultor = new MetodosPaciente(usuarioConsultor, pass);
+		MetodosPaciente modificador = new MetodosPaciente(usuario, pass);
+		
+		fecha.set(1995, 10, 22);
+		
+		//System.out.println(fecha.get(fecha.YEAR));
+		p1 = new Paciente("Lan", "Jaron", fecha, "12344321A", 13, 'V');
+		
+		//ESCRIBIR PACIENTE
+		/*codigo = modificador.escribirPaciente(p1);
+		System.out.println(codigo);*/
+		
+		//PINTAR PACIENTES
+		//consultor.pintarPacientesEnPantalla();
+		
+		//COGER PACIENTE
+		/*p1 = modificador.getPaciente(6);
+		System.out.println(p1.toString());*/
+		
+		//INGRESAR PACIENTE
+		/*codigo = modificador.ingresarPaciente(13, "null");
+		System.out.println(codigo);*/
+		
+		//DAR DE ALTA
+		codigo = modificador.darPacienteDeAlta(13, "null");
+		System.out.println(codigo);
+		
+		//HISTORIAL DE PACIENTE
+		consultor.historialDeIngresosPaciente(13);
+	}
+}

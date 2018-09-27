@@ -1,0 +1,16 @@
+package miscelanea;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+public class fechas {
+	public static void main(String[] args){
+		
+		Calendar fecha1 = new GregorianCalendar();
+		
+		
+		System.out.println(fecha1.getTime());
+		
+	}
+}

@@ -1,0 +1,14 @@
+package miscelanea;
+
+import java.util.Calendar;
+import java.util.Date;
+
+public class fechas {
+	public static void main(String[] args){
+		
+		Calendar fecha1 = null;
+		Date date1 = null;
+		
+		
+	}
+}

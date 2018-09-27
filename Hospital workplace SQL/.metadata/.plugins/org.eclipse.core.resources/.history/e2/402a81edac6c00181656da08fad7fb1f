@@ -1,0 +1,648 @@
+/**
+ * nombre de programa: MetodosPaciente.java
+ * 
+ * propiedades basicas:
+ * 	no hay
+ * 
+ * propiedades derivadas:
+ * 	no hay
+ * 
+ * metodos adicionales:
+ * 	void crearArchivos()
+ * 	boolean crearPaciente()
+ * 	boolean escribirPaciente(File f, Paciente p)
+ * 	void pintarPacientesEnPantalla(File f)
+ * 	long buscarPosicionNuevoPacienteEnArchivo(File f, Paciente p)
+ * 	void desplazarRegistrosParaAgregar(File f, long puntero)
+ * 	void desplazarRegistrosParaQuitar(File f, long puntero)
+ * 	int borrarPaciente(int numeroColegiado)
+ *  Paciente getPaciente(File f, int numeroSS)
+ */
+package Hospital;
+
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+import Pendiente.MetodosGenerales;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.RandomAccessFile;
+
+
+public class MetodosPaciente {
+	
+	static File carpeta = new File("./archivos");
+	static File archivoPacientes = new File(carpeta.getAbsolutePath()+"/pacientes.dat");
+	static File bajasPacientes = new File(carpeta.getAbsolutePath()+"/bajasPacientes.dat");
+	static RandomAccessFile archivo = null;
+	
+	static int tamanioRegistroCompleto=69, posicionRegistroNumeroSeguridadSocial=65, posicionRegistroSexo=63;
+	
+	
+	/**
+	 * cabecera: void crearArchivos()
+	 * comentario: metodo para crear las carpetas y archivos necesarios para el funcionamiento de los metodos
+	 * precondiciones: nada
+	 * entrada: nada
+	 * e/s: nada
+	 * salida: nada
+	 * postcondiciones: nada, crea los archivos en la ruta especificada
+	 */
+	public static void crearArchivos(){
+		if (!carpeta.exists()){
+			carpeta.mkdir();
+		}
+		if (!archivoPacientes.exists()){
+			try {
+				archivoPacientes.createNewFile();
+			}
+			catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+		if (!bajasPacientes.exists()){
+			try {
+				bajasPacientes.createNewFile();
+			}
+			catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * cabecera: boolean crearPaciente()
+	 * comentario: metodo para introducir los parametros de un nuevo paciente
+	 * precondiciones: nada
+	 * entrada: nada
+	 * e/s: nada
+	 * salida: un logico
+	 * postcondiciones: asociado al nombre devuelve true si el paciente ha sido creado correctamente y false si no
+	 */
+	public static boolean crearPaciente(){
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		Paciente p = null;
+		
+		boolean creacionCorrecta=false, dniCorrecto=false, sexoCorrecto=false;
+		String nombre="", apellidos="", dniConLetra="", dni="";
+		int anio=0, mes=0, dia=0, numeroSeguridadSocial=0;
+		Calendar fechaNacimiento = null;
+		char correcto=' ', sexo=' ';
+		
+		System.out.println("Introduce nombre");
+		try{
+			nombre = br.readLine().toUpperCase();
+		}
+		catch(IOException e){}
+		System.out.println("Introduce apellidos");
+		try{
+			apellidos = br.readLine().toUpperCase();
+		}
+		catch(IOException e){}
+		System.out.println("Introduce anio de nacimiento");
+		try{
+			anio = Integer.parseInt(br.readLine());
+		}
+		catch(IOException e){}
+		catch(NumberFormatException e){}
+		System.out.println("Introduce mes de nacimiento en digito(enero -> 1)");
+		try{
+			mes = Integer.parseInt(br.readLine())-1;
+		}
+		catch(IOException e){}
+		catch(NumberFormatException e){}
+		System.out.println("Introduce dia de nacimiento");
+		try{
+			dia = Integer.parseInt(br.readLine());
+		}
+		catch(IOException e){}
+		catch(NumberFormatException e){}
+		do{
+			System.out.println("Introduce DNI sin letra");
+			try{
+				dni = br.readLine();
+				
+				if(dni.length()==8){
+					dniCorrecto=true;
+					dniConLetra = MetodosGenerales.aniadirLetraDni(Integer.parseInt(dni));
+				}
+			}
+			catch(IOException e){}
+			catch(NumberFormatException e){}
+		}while(!dniCorrecto);
+		System.out.println("Introduce numero de seguridad social");
+		try{
+			numeroSeguridadSocial = Integer.parseInt(br.readLine());
+		}
+		catch(IOException e){}
+		catch(NumberFormatException e){}
+		do{
+			System.out.println("Introduce sexo");
+			try{
+				sexo = br.readLine().toUpperCase().charAt(0);
+				if(sexo=='V' || sexo=='M') sexoCorrecto=true;
+			}
+			catch(Exception e){}
+		}while(!sexoCorrecto);
+		
+		
+		fechaNacimiento = new GregorianCalendar(anio, mes, dia);
+		
+		do{
+			System.out.println("Comprueba los datos para confirmar");
+			System.out.println("\nNombre: "+nombre);
+			System.out.println("Apellidos: "+apellidos);
+			System.out.println("Fecha de nacimiento: "+fechaNacimiento.getTime());
+			System.out.println("DNI: "+dniConLetra);
+			System.out.println("Numero Seguridad Social: "+numeroSeguridadSocial);
+			System.out.println("Sexo: "+sexo);
+			System.out.println("\nEs correcto? S/N");
+			try{
+				correcto = br.readLine().toUpperCase().charAt(0);
+			}
+			catch(IOException e){}
+		}while(correcto!='S'&&correcto!='N');
+		
+		if(correcto=='S'){
+			p = new Paciente(nombre, apellidos, fechaNacimiento, dniConLetra, numeroSeguridadSocial, sexo);
+			creacionCorrecta = escribirPaciente(archivoPacientes, p);
+			
+		}
+		
+		
+		return creacionCorrecta;
+	}
+	
+	/**
+	 * cabecera: boolean escribirPaciente(File f, Paciente p)
+	 * comentario: metodo para escribir un objeto de paciente en un archivo
+	 * precondiciones: el archivo debe existir
+	 * entrada: un objeto tipo File y otro tipo Paciente
+	 * e/s: nada
+	 * salida: un logico
+	 * postcondiciones: asociado al nombre devuelve true si ha escrito el objeto en el archivo y false si el objeto ya existia en el archivo
+	 */
+	public static boolean escribirPaciente(File f, Paciente p){
+		boolean objetoEscrito=false;
+		String[] partes = p.toString().split(",");
+		long puntero=0;
+		
+		
+		partes[0] = MetodosGenerales.agregarEspaciosEnCadena(partes[0], 20);
+		partes[1] = MetodosGenerales.agregarEspaciosEnCadena(partes[1], 20);
+		
+		
+		//HAY QUE INCLUIR LA BUSQUEDA EN EL ARCHIVO PARA DETERMINAR LA POSICION DONDE HAY QUE ESCRIBIR, PARA QUE EL ARCHIVO ESTE SIEMPRE ORDENADO
+		puntero = buscarPosicionNuevoPacienteEnArchivo(f, p);
+		
+		
+		if(puntero!=-1){
+			try{
+				if(puntero<archivo.length()){
+					
+					//llamada a metodo para mover los registros posteriores a donde se va a colocar el nuevo
+					desplazarRegistrosParaAgregar(f, puntero);
+					
+				}
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+			
+			try{
+					archivo = new RandomAccessFile(f, "rw");
+					archivo.seek(puntero);
+					archivo.writeUTF(partes[0]); //apellidos							
+					archivo.writeUTF(partes[1]); //nombre
+					archivo.writeLong(Long.parseLong(partes[2])); //fechanac LONG
+					archivo.writeUTF(partes[3]); //dni
+					archivo.writeChar(partes[4].charAt(0)); //sexo CHAR
+					archivo.writeInt(Integer.parseInt(partes[5])); //numeroSS INT
+					
+					
+					objetoEscrito = true;
+			}
+			catch(Exception e){
+				e.printStackTrace();
+			}
+			finally{
+				try{
+					archivo.close();
+				}
+				catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		return objetoEscrito;
+	}
+	
+	
+	/**
+	 * cabecera: void pintarPacientesEnPantalla(File f)
+	 * comentario: metodo para pintar los pacientes existentes en un archivo en pantalla
+	 * precondiciones: el fichero debe existir
+	 * entrada: un objeto tipo File
+	 * e/s: nada
+	 * salida: nada
+	 * postcondiciones: nada, pinta en pantalla los pacientes guardados en el fichero
+	 */
+	public static void pintarPacientesEnPantalla(File f){
+		long puntero=0;
+		
+		try{
+			archivo = new RandomAccessFile(f, "r");
+		}
+		catch(FileNotFoundException e){}
+		
+		try{
+			if(archivo.length()>0){
+				while(puntero<archivo.length()){
+					
+					String apellidos, nombre, dni;
+					long fechaEnMilis;
+					int numeroSS;
+					char sexo;
+					Paciente p = null;
+					Calendar fecha = null;
+					
+					apellidos=archivo.readUTF();
+					nombre=archivo.readUTF();
+					fechaEnMilis=archivo.readLong();
+					dni=archivo.readUTF();
+					sexo=archivo.readChar();
+					numeroSS=archivo.readInt();
+					
+					
+					apellidos = MetodosGenerales.quitarEspaciosDeCadena(apellidos);
+					nombre = MetodosGenerales.quitarEspaciosDeCadena(nombre);
+					
+					
+					fecha = new GregorianCalendar();
+					fecha.setTimeInMillis(fechaEnMilis);
+					
+					p = new Paciente(nombre, apellidos, fecha, dni, numeroSS, sexo);
+					
+					System.out.println(p.datosEnBonito()+"\n============================");
+					
+					puntero = archivo.getFilePointer();
+				}
+			}
+		}
+		catch(IOException e){e.printStackTrace();}
+		catch(NullPointerException e){e.printStackTrace();}
+		finally{
+			try{
+				archivo.close();
+			}
+			catch(IOException e){}
+			catch(NullPointerException e){
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	/**
+	 * cabecera: long buscarPosicionNuevoPacienteEnArchivo(File f, Paciente p)
+	 * comentario: metodo para buscar en que posicion se escribirá un nuevo paciente
+	 * precondiciones: el archivo debe existir
+	 * entrada: un objeto tipo File y otro tipo Paciente
+	 * e/s: nada
+	 * salida: un entero
+	 * postcondiciones: asociado al nombre devuelve la posicion del puntero donde debe escribirse el nuevo paciente, o -1 si ya existe en el archivo
+	 */
+	public static long buscarPosicionNuevoPacienteEnArchivo(File f, Paciente p){
+		long puntero = 0;
+		int numeroActual=0;
+		boolean lugarEncontrado = false;
+		boolean repetido = false;
+		
+		try{
+			archivo = new RandomAccessFile(f, "r");
+		}
+		catch(FileNotFoundException e){
+			e.printStackTrace();
+		}
+		
+		try{
+			if(archivo.length()>0){
+				long i=posicionRegistroNumeroSeguridadSocial;
+				for(;i<archivo.length() && !lugarEncontrado && !repetido;i=i+tamanioRegistroCompleto){
+					archivo.seek(i);
+					numeroActual = archivo.readInt();
+					if (p.getNumeroSeguridadSocial()<numeroActual){
+						lugarEncontrado=true;
+					}
+					else if(p.getNumeroSeguridadSocial()==numeroActual){
+						repetido=true;
+						puntero=-1;
+					}
+				}
+				if(lugarEncontrado) puntero = i-(tamanioRegistroCompleto+posicionRegistroNumeroSeguridadSocial);
+				else if (!lugarEncontrado && !repetido)puntero = i-posicionRegistroNumeroSeguridadSocial;
+			}
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		return puntero;
+	}
+	
+	
+	/**
+	 * cabecera: void desplazarRegistrosParaAgregar(File f, long puntero)
+	 * comentario: metodo para mover de sitio los registros necesarios para agregar un nuevo Paciente y mantener el fichero ordenado
+	 * precondiciones: el archivo debe existir
+	 * entrada: un objeto tipo File y un entero
+	 * e/s: nada
+	 * salida: nada
+	 * postcondiciones: nada, desplaza los registros necesarios para poder escribir el nuevo paciente
+	 */
+	public static void desplazarRegistrosParaAgregar(File f, long puntero){
+		
+		String nombre1="", nombre2="", apellidos1="", apellidos2="", dni1="", dni2="";
+		long milisFecha1=0, milisFecha2=0, longitudArchivo=0, miPuntero=puntero;
+		int numeroSS1=0, numeroSS2=0;
+		char sexo1=' ', sexo2=' ';
+		
+		try{
+			archivo = new RandomAccessFile(f, "rw");
+			longitudArchivo = archivo.length();
+			archivo.seek(miPuntero);
+		}
+		catch(FileNotFoundException e){
+			e.printStackTrace();
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		
+		try{
+			//leer primer objeto
+			apellidos1=archivo.readUTF();
+			nombre1=archivo.readUTF();
+			milisFecha1=archivo.readLong();
+			dni1=archivo.readUTF();
+			sexo1=archivo.readChar();
+			numeroSS1=archivo.readInt();
+			
+			
+			while(miPuntero<=longitudArchivo){
+				miPuntero = archivo.getFilePointer();
+				
+				if(miPuntero<longitudArchivo){
+					//leer segundo objeto
+					apellidos2=archivo.readUTF();
+					nombre2=archivo.readUTF();
+					milisFecha2=archivo.readLong();
+					dni2=archivo.readUTF();
+					sexo2=archivo.readChar();
+					numeroSS2=archivo.readInt();
+					
+					archivo.seek(miPuntero);
+				}
+				
+				//escribir primer objeto al comienzo de indice del segundo
+				archivo.writeUTF(apellidos1);
+				archivo.writeUTF(nombre1);
+				archivo.writeLong(milisFecha1);
+				archivo.writeUTF(dni1);
+				archivo.writeChar(sexo1);
+				archivo.writeInt(numeroSS1);
+				
+				if(miPuntero<longitudArchivo){
+					//sustituir los campos del primer objeto por los del segundo
+					apellidos1=apellidos2;
+					nombre1=nombre2;
+					milisFecha1=milisFecha2;
+					dni1=dni2;
+					sexo1=sexo2;
+					numeroSS1=numeroSS2;
+					
+				}
+				else{
+					miPuntero++;
+				}
+			}
+		}
+		catch(Exception e){}
+		
+	}
+	
+	
+	/**
+	 * cabecera: void desplazarRegistrosParaQuitar(File f, long puntero)
+	 * comentario: metodo para mover de sitio los registros necesarios para borrar un Paciente y mantener el fichero ordenado
+	 * precondiciones: el archivo debe existir
+	 * entrada: un objeto tipo File y un entero
+	 * e/s: nada
+	 * salida: nada
+	 * postcondiciones: nada, desplaza los registros necesarios para poder borrar el paciente
+	 */
+	public static void desplazarRegistrosParaQuitar(File f, long puntero){
+		
+		String nombre1="", apellidos1="", dni1="";
+		long milisFecha1=0, longitudArchivo=0, miPuntero=puntero;
+		int numeroSS1=0;
+		char sexo1=' ';
+		
+		try{
+			archivo = new RandomAccessFile(f, "rw");
+			longitudArchivo = archivo.length();
+			archivo.seek(miPuntero);
+		}
+		catch(FileNotFoundException e){
+			e.printStackTrace();
+		}
+		catch(IOException e){
+			e.printStackTrace();
+		}
+		
+		
+		try{
+			while(miPuntero<(longitudArchivo-tamanioRegistroCompleto)){
+				
+				//leer el objeto a escribir
+				miPuntero=miPuntero+tamanioRegistroCompleto;
+				archivo.seek(miPuntero);
+				apellidos1=archivo.readUTF();
+				nombre1=archivo.readUTF();
+				milisFecha1=archivo.readLong();
+				dni1=archivo.readUTF();
+				sexo1=archivo.readChar();
+				numeroSS1=archivo.readInt();
+				
+				
+				
+				//escribir el objeto encima del que se va a borrar
+				miPuntero=miPuntero-tamanioRegistroCompleto;
+				archivo.seek(miPuntero);
+				archivo.writeUTF(apellidos1);
+				archivo.writeUTF(nombre1);
+				archivo.writeLong(milisFecha1);
+				archivo.writeUTF(dni1);
+				archivo.writeChar(sexo1);
+				archivo.writeInt(numeroSS1);
+				
+				
+				
+				miPuntero=archivo.getFilePointer();
+			}
+			
+			archivo.setLength(miPuntero);
+		}
+		catch(Exception e){}
+		
+	}
+	
+	
+	
+	/**
+	 * cabecera: int borrarPaciente(int numeroSS)
+	 * comentario: metodo para borrar un paciente del archivo de pacientes
+	 * precondiciones: el paciente debe existir
+	 * entrada: un entero
+	 * e/s: nada
+	 * salida: un entero
+	 * postcondiciones: asociado al nombre devuelve -1 no se ha podido encontrar el paciente a borrar, 1 borrado el paciente pero no se ha añadido al archivo de bajas, 0 se ha borrado satisfactoriamente y se ha movido el paciente borrado al fichero de bajas
+	 */
+	public static int borrarPaciente(int numeroSS){
+		
+		Paciente p = null;
+		Calendar fecha = new GregorianCalendar();
+		long puntero=0;
+		boolean pacienteEncontrado = false, estaBorrado=false;
+		String nombre="", apellidos="", dni="";
+		long milisFecha1=0;
+		char sexo=' ';
+		int exito = -1;
+		
+		try{
+			//abrir el fichero de pacientes
+			archivo = new RandomAccessFile(archivoPacientes, "rw");
+			
+			//leer el fichero hasta encontrar el paciente a borrar
+			
+			for(long i=posicionRegistroNumeroSeguridadSocial;!pacienteEncontrado && i<archivo.length();i=i+tamanioRegistroCompleto){
+				archivo.seek(i);
+				int numero = archivo.readInt();
+				if(numero==numeroSS){
+					pacienteEncontrado=true;
+					
+					//mover el puntero para copiar el objeto
+					archivo.seek(i-posicionRegistroNumeroSeguridadSocial);
+					
+					apellidos=archivo.readUTF();
+					nombre=archivo.readUTF();
+					milisFecha1=archivo.readLong();
+					dni=archivo.readUTF();
+					sexo=archivo.readChar();
+					numero=archivo.readInt();
+					
+					
+					fecha.setTimeInMillis(milisFecha1);
+					p = new Paciente(nombre, apellidos, fecha, dni, numeroSS, sexo);
+					
+					//marcar la posicion a borrar
+					puntero = archivo.getFilePointer()-tamanioRegistroCompleto;
+				}
+			}
+			
+			//mover los pacientes restantes de posicion para eliminar el paciente de alta
+			desplazarRegistrosParaQuitar(archivoPacientes, puntero);
+			
+			//copiar el medico al fichero de bajas
+			estaBorrado = escribirPaciente(bajasPacientes, p);
+			
+			if(estaBorrado){
+				exito = 0;
+			}
+			else{
+				exito = 1;
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		finally{
+			try{
+				archivo.close();
+			}
+			catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+		
+		return exito;
+	}
+	
+	/**
+	 * cabecera: Paciente getPaciente(File f, int numeroSS)
+	 * comentario: Metodo para obtener los datos de un paciente
+	 * precondiciones: nada
+	 * entrada: un archivo y un entero
+	 * e/s: nada
+	 * salida: un objeto tipo Paciente
+	 * postcondiciones: asociado al nombre devuelve el objeto Paciente buscado, o null si no existe en el archivo
+	 */
+	public static Paciente getPaciente(File f, int numeroSS){
+		
+		Paciente p = null;
+		Calendar fecha = null;
+		boolean encontrado = false;
+		long posicion=0;
+		String nombre="", apellidos="", dni="";
+		long milisFecha=0;
+		int numero=0;
+		char sexo=' ';
+		
+		try{
+			archivo = new RandomAccessFile(f, "r");
+		
+			for(long i=posicionRegistroNumeroSeguridadSocial;!encontrado && i<archivo.length();i=i+tamanioRegistroCompleto){
+				archivo.seek(i);
+				numero = archivo.readInt();
+				if(numero==numeroSS){
+					encontrado=true;
+					posicion = i-posicionRegistroNumeroSeguridadSocial;
+					archivo.seek(posicion);
+					
+					apellidos=archivo.readUTF();
+					nombre=archivo.readUTF();
+					milisFecha=archivo.readLong();
+					dni=archivo.readUTF();
+					sexo=archivo.readChar();
+					numero=archivo.readInt();
+					
+					
+					fecha = new GregorianCalendar();
+					fecha.setTimeInMillis(milisFecha);
+					
+					p = new Paciente(nombre, apellidos, fecha, dni, numeroSS, sexo);
+				}
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		finally{
+			try{
+				archivo.close();
+			}
+			catch(IOException e){
+				e.printStackTrace();
+			}
+		}
+		
+		return p;
+	}
+
+}

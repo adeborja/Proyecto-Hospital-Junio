@@ -1,0 +1,35 @@
+package Hospital;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
+public class conductorMetodosIntervencion {
+	public static void main(String[] args){
+		
+		int codigo = -10;
+		String usuario = "UsuarioModificador", usuarioConsultor = "UsuarioConsultor", pass="123";
+		IntervencionIMPL i1 = null;
+		Calendar fecha = new GregorianCalendar();
+		//Date date = new Date(); date.setTime(fecha.getTimeInMillis());
+		
+		MetodosIntervencion consultor = new MetodosIntervencion(usuarioConsultor, pass);
+		MetodosIntervencion modificador = new MetodosIntervencion(usuario, pass);
+		
+		fecha.set(2025, 10, 22);
+		
+		//System.out.println(fecha.get(fecha.YEAR));
+		//i1 = new IntervencionIMPL(13, 111, fecha, "ESTO ES UNA DESCRIPCION");
+		
+		//ESCRIBIR INTERVENCION
+		/*codigo = modificador.escribirIntervencion(i1);
+		System.out.println(codigo);*/
+		
+		//BORRAR INTERVENCION
+		/*codigo = modificador.borrarIntervencion(7);
+		System.out.println(codigo);*/
+		
+		
+		
+		
+	}
+}

@@ -1,0 +1,9 @@
+package Hospital;
+
+public class conductorMetodosValidacion {
+	public static void main(String[] args){
+		
+		
+		
+	}
+}

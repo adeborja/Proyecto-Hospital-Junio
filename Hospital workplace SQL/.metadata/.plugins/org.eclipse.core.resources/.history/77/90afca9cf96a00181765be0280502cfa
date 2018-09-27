@@ -1,0 +1,19 @@
+package miscelanea;
+
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+public class fechas {
+	public static void main(String[] args){
+		
+		Calendar fecha1 = new GregorianCalendar();
+		
+		fecha1.set(Calendar.YEAR, 1987);
+		fecha1.set(Calendar.MONTH, 7);
+		fecha1.set(Calendar.DAY_OF_MONTH, 11);
+		
+		System.out.println(fecha1.getTime());
+		
+	}
+}

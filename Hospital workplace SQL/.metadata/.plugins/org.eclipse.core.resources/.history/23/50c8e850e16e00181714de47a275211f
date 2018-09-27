@@ -1,0 +1,30 @@
+package Hospital;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
+
+public class MetodosValidacion {
+	
+	public static int validarUsuario(int numero, String contrasenia)
+	{
+		
+		Connection conexion = null;
+		Statement sentencia = null;
+		
+		int codigo = -6, aux=-2;
+		String comando = "select dbo.ValidarLogin ("+numero+", "+contrasenia+")";
+		
+		
+			conexion = DriverManager.getConnection("jdbc:sqlserver://localhost","LoginBBDD","123");
+			sentencia = conexion.createStatement();
+			aux = sentencia.executeUpdate(comando);
+			
+			if(aux==0)
+			{
+				
+			}
+		
+	}
+	
+}

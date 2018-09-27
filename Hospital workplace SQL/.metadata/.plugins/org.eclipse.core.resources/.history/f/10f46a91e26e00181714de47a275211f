@@ -1,0 +1,110 @@
+package Hospital;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+public class MetodosValidacion {
+	
+	public static int validarUsuario(int numero, String contrasenia)
+	{
+		
+		Connection conexion = null;
+		Statement sentencia = null;
+		ResultSet res = null;
+		
+		int codigoLogin=-2;
+		String comandoValidar = "select dbo.ValidarLogin ("+numero+", "+contrasenia+")";
+		
+		try
+		{
+			conexion = DriverManager.getConnection("jdbc:sqlserver://localhost","LoginBBDD","123");
+			sentencia = conexion.createStatement();
+			res = sentencia.executeQuery(comandoValidar);
+			
+			res.next();
+			
+			codigoLogin = res.getInt();
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+			System.out.println(e.getErrorCode());
+		}
+		finally
+		{
+			try
+			{
+				res.close();
+			}
+			catch(SQLException e)
+			{}
+			try
+			{
+				sentencia.close();
+			}
+			catch(SQLException e)
+			{}
+			try
+			{
+				conexion.close();
+			}
+			catch(SQLException e)
+			{}
+		}
+			
+		return codigoLogin;
+	}
+	
+	
+	/*public static int validarUsuario2(int numero, String contrasenia)
+	{
+		
+		Connection conexion = null;
+		Statement sentencia = null;
+		
+		int codigo = -6, codigoLogin=-2;
+		String comandoValidar = "select dbo.ValidarLogin ("+numero+", "+contrasenia+")";
+		String comandoDatos = "select dbo.BuscarUsuarioDeMedico_AD_Hospital (@num)";
+		String aux = "";
+		
+		try
+		{
+			conexion = DriverManager.getConnection("jdbc:sqlserver://localhost","LoginBBDD","123");
+			sentencia = conexion.createStatement();
+			codigoLogin = sentencia.executeUpdate(comandoValidar);
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+			System.out.println(e.getErrorCode());
+		}
+		finally
+		{
+			try
+			{
+				sentencia.close();
+			}
+			catch(SQLException e)
+			{}
+			try
+			{
+				conexion.close();
+			}
+			catch(SQLException e)
+			{}
+		}
+			
+			
+		if(codigoLogin==0)
+		{
+			conexion = DriverManager.getConnection("jdbc:sqlserver://localhost","LoginBBDD","123");
+			sentencia = conexion.createStatement();
+			
+		}
+		
+	}*/
+	
+}

@@ -1,0 +1,9 @@
+package Hospital;
+
+public class conductorMetodosIntervencion {
+	public static void main(String[] args){
+		
+		
+		
+	}
+}

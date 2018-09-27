@@ -1,0 +1,441 @@
+/**
+ * nombre del programa: MetodosIntervencion.java
+ * 
+ * propiedades basicas:
+ * 	no hay
+ * 
+ * propiedades derivadas:
+ * 	no hay
+ * 
+ * metodos adicionales:
+ * 	void crearArchivos()
+ * 	boolean crearIntervencion()
+ * 	boolean escribirIntervencion(File f, IntervencionIMPL intervencion)
+ * 	void pintarIntervencionesEnPantalla(File f)
+ * 	long buscarPosicionNuevaIntervencionEnArchivo(File f, IntervencionIMPL intervencion)
+ * 	void desplazarRegistrosParaAgregar(File f, long puntero)
+ * 	void desplazarRegistrosParaQuitar(File f, long puntero)
+ * 	int borrarIntervencion(int numeroColegiado, int numeroSS)
+ *  IntervencionIMPL getIntervencion(File f, int numeroColegiado,  int numeroSS)
+ */
+
+package Hospital;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+
+import Pendiente.MetodosGenerales;
+
+
+public class MetodosIntervencion {
+	
+private static String sourceURL = "jdbc:sqlserver://localhost";
+	
+	private String usuario, contrasenia;
+	
+	public MetodosIntervencion(String nUsuario, String nContrasenia)
+	{
+		this.usuario=nUsuario;
+		this.contrasenia=nContrasenia;
+	}
+	
+	
+	/**
+	 * cabecera: int crearIntervencion()
+	 * comentario: metodo para introducir los parametros de una nueva intervencion
+	 * precondiciones: nada
+	 * entrada: nada
+	 * e/s: nada
+	 * salida: un entero
+	 * postcondiciones: asociado al nombre el codigo recibido del metodo escribirIntervencion
+	 */
+	public int crearIntervencion()
+	{
+		
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		MedicoIMPL m = null;
+		Paciente p = null;
+		Calendar fecha = null;
+		IntervencionIMPL i = null;
+		MetodosPaciente mp = new MetodosPaciente(this.usuario, this.contrasenia);
+		MetodosMedico mm = new MetodosMedico(this.usuario, this.contrasenia);
+		
+		int numeroSS=-1, numeroColegiado=-1, anio=-1, mes=-1, dia=-1, hora=-1, minuto=-1, opcion=-1, codigoDevuelto=-1;
+		boolean pacienteExiste=false, medicoExiste=false;
+		String descripcion;
+		char correcto = ' ';
+		
+		try
+		{
+			System.out.println("Introduce el numero de seguridad social del paciente");
+			numeroSS = Integer.parseInt(br.readLine());
+			p = mp.getPaciente(numeroSS);
+			
+			if(p!=null) pacienteExiste=true;
+			else
+			{
+				System.out.println("No existe ningun paciente con el numero de seguridad social "+numeroSS+".");
+			}
+			
+			if(pacienteExiste)
+			{
+				System.out.println("Introduce el numero de colegiado del medico");
+				numeroColegiado = Integer.parseInt(br.readLine());
+				m = mm.getMedico(numeroColegiado);
+				
+				if(m!=null) medicoExiste=true;
+				else
+				{
+					System.out.println("No existe ningun medico con el numero de colegiado "+numeroColegiado+".");
+				}
+				
+				if(medicoExiste)
+				{
+					do
+					{
+						System.out.println("Introduce 1 para añadir la fecha de la intervencion, o 2 para tomar la fecha actual, o 3 para salir");
+						opcion = Integer.parseInt(br.readLine());
+					}while(opcion<1 && opcion>3);
+					
+					if(opcion==1)
+					{
+						System.out.println("Introduce el anio de la intervencion");
+						anio = Integer.parseInt(br.readLine());
+						
+						System.out.println("Introduce el mes de la intervencion en digito(enero -> 1)");
+						mes = Integer.parseInt(br.readLine())-1;
+						
+						System.out.println("Introduce el dia de la intervencion");
+						dia = Integer.parseInt(br.readLine());
+						
+						System.out.println("Introduce la hora de la intervencion");
+						hora = Integer.parseInt(br.readLine());
+						
+						System.out.println("Introduce el minuto de la intervencion");
+						minuto = Integer.parseInt(br.readLine());
+						
+						fecha = new GregorianCalendar();
+						fecha.set(anio, mes, dia, hora, minuto);
+					}
+					else if(opcion==2) fecha = new GregorianCalendar();
+					
+					if(opcion!=3)
+					{
+						System.out.println("Introduce la descripcion de la intervencion");
+						descripcion = br.readLine().toUpperCase();
+						
+						
+						do
+						{
+							System.out.println("Comprueba los datos para confirmar");
+							System.out.println("\nNumero de seguridad social del paciente: "+numeroSS);
+							System.out.println("Numero de colegiado del medico: "+numeroColegiado);
+							System.out.println("Fecha de la intervencion: "+fecha.getTime());
+							System.out.println("Descripcion: "+descripcion);
+							System.out.println("\nEs correcto? S/N");
+							try
+							{
+								correcto = br.readLine().toUpperCase().charAt(0);
+							}
+							catch(IOException e){}
+						}
+						while(correcto!='S'&&correcto!='N');
+						
+						if(correcto=='S')
+						{
+							i = new IntervencionIMPL(numeroSS, numeroColegiado, fecha, descripcion);
+							
+							codigoDevuelto = escribirIntervencion(i);
+						}
+					}
+				}
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+		}
+		
+		return codigoDevuelto;
+	}
+	
+	
+	/**
+	 * cabecera: int escribirIntervencion(IntervencionIMPL i)
+	 * comentario: metodo para escribir un objeto de intervencion en la base de datos
+	 * precondiciones: nada
+	 * entrada: un objeto tipo IntervencionIMPL
+	 * e/s: nada
+	 * salida: un entero
+	 * postcondiciones: asociado al nombre devuelve 0 si se ha insertado la intervencion, 1 si no se ha podido conectar a la BBDD, 2 si ya existe la intervencion y -1 si sucede algun error 
+	 */
+	public int escribirIntervencion(IntervencionIMPL i)
+	{
+		Calendar fechaCalendar = i.getFecha();
+		
+		Connection conexionBBDD = null;
+		Statement sentencia = null;
+		
+		int codigoSalida = -1, filasAfectadas = -1, anio = fechaCalendar.get(fechaCalendar.YEAR), 
+				mes = fechaCalendar.get(fechaCalendar.MONTH)+1, dia = fechaCalendar.get(fechaCalendar.DAY_OF_MONTH),
+				hora = fechaCalendar.get(fechaCalendar.HOUR_OF_DAY), minuto = fechaCalendar.get(fechaCalendar.MINUTE);
+		String comando;
+		//String comandoFecha = "'"+anio+"-"+mes+"-"+dia+" "+hora+":"+minuto+"'";
+		String comandoFecha = "SMALLDATETIMEFROMPARTS("+anio+","+mes+","+dia+","+hora+","+minuto+")";
+		
+		try
+		{
+			conexionBBDD = DriverManager.getConnection(sourceURL, this.usuario, this.contrasenia);
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+			//e.getErrorCode(); recoge el numero que lanza la excepcion
+			codigoSalida = 1; //No puede realizarse la conexion
+		}
+		
+		
+		if(codigoSalida != 1)
+		{
+			//insertar comando en sql
+			
+			try
+			{
+				sentencia = conexionBBDD.createStatement();
+				
+				comando = "insert into Intervenciones (NumeroSeguridadSocialPaciente, NumeroColegiadoMedico, Fecha, Descripcion) VALUES ("+i.getNumeroSSPaciente()+","+i.getNumeroColegiado()+","+comandoFecha+",'"+i.getDescripcion()+"')";
+				
+				filasAfectadas = sentencia.executeUpdate(comando); //puede saltar excepcion si ya existe?
+				
+				if(filasAfectadas == 1) codigoSalida=0;
+			}
+			catch(SQLException e)
+			{
+				e.printStackTrace();
+				codigoSalida = 2; //Ya existe la primary key
+			}
+			
+		}
+		
+		try
+		{
+			sentencia.close();
+		}
+		catch(SQLException e)
+		{
+			//e.printStackTrace();
+		}
+		try
+		{
+			conexionBBDD.close();
+		}
+		catch(SQLException e)
+		{
+			//e.printStackTrace();
+		}
+		
+		return codigoSalida;
+	}
+	
+	
+	/**
+	 * cabecera: int borrarIntervencion(int id)
+	 * comentario: metodo para borrar una intervencion de la base de datos
+	 * precondiciones: nada
+	 * entrada: un entero
+	 * e/s: nada
+	 * salida: un entero
+	 * postcondiciones: asociado al nombre devuelve 0 si no se ha encontrado la intervencion especificada, 1 si se ha borrado correctamente y 2 si la fecha de la intervencion es anterior a la actual
+	 */
+	public int borrarIntervencion(int id){
+		
+		Connection conexion = null;
+		Statement sentencia = null;
+		String comando = "delete from Intervenciones where id="+id;
+		
+		IntervencionIMPL inter = null;
+		Calendar fecha = new GregorianCalendar(), fechaActual = new GregorianCalendar();
+		long puntero=0;
+		boolean datosEncontrados = false;
+		String descripcion="";
+		long milisFecha1=0;
+		int exito = -1;
+		
+		
+		try
+		{
+			conexion = DriverManager.getConnection(sourceURL, this.usuario, this.contrasenia);
+			sentencia = conexion.createStatement();
+			exito = sentencia.executeUpdate(comando);
+			
+			
+		}
+		catch(SQLException e)
+		{
+			if(e.getErrorCode()==51000)
+			{
+				exito=2; //la fecha es anterior a la actual
+			}
+			else
+			{
+				e.printStackTrace();
+				System.out.println(e.getErrorCode());
+			}
+		}
+		finally
+		{
+			
+			try
+			{
+				sentencia.close();
+			}
+			catch(SQLException e)
+			{
+				//e.printStackTrace();
+			}
+			try
+			{
+				conexion.close();
+			}
+			catch(SQLException e)
+			{
+				//e.printStackTrace();
+			}
+		}
+		
+		
+		
+		return exito;
+	}
+	
+	
+	/**
+	 * cabecera: IntervencionIMPL getIntervencion(int id)
+	 * comentario: Metodo para obtener los datos de una intervencion
+	 * precondiciones: nada
+	 * entrada: un entero
+	 * e/s: nada
+	 * salida: un objeto tipo IntervencionIMPL
+	 * postcondiciones: asociado al nombre devuelve el objeto IntervencionIMPL buscado, o null si no existe en la base de datos
+	 */
+	public IntervencionIMPL getIntervencion(int id)
+	{
+		
+		Connection conexion = null;
+		Statement sentencia = null;
+		ResultSet resultado = null;
+		String comando = "select numeroseguridadsocialpaciente, numerocolegiadomedico, fecha, descripcion from Intervenciones where id="+id;
+		
+		IntervencionIMPL inter = null;
+		Calendar fecha = null;
+		Date date = null;
+		boolean encontrado = false;
+		String descripcion="";
+		long milisFecha=0;
+		int numeroSSRegistro=0, numeroColegiadoRegistro=0;
+		
+		try
+		{
+			conexion = DriverManager.getConnection(sourceURL, this.usuario, this.contrasenia);
+			sentencia = conexion.createStatement();
+			resultado = sentencia.executeQuery(comando);
+			
+			resultado.next();
+			
+			numeroSSRegistro = resultado.getInt("numeroSeguridadSocialPaciente");
+			numeroColegiadoRegistro = resultado.getInt("numerocolegiadomedico");
+			date = resultado.getDate("fecha");
+			descripcion = resultado.getString("descripcion");
+			
+			fecha.setTime(date);
+			
+			inter = new IntervencionIMPL(numeroSSRegistro, numeroColegiadoRegistro, fecha, descripcion);
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+			System.out.println(e.getErrorCode());
+		}
+		finally
+		{
+			try
+			{
+				resultado.close();
+			}
+			catch(SQLException e)
+			{
+				//e.printStackTrace();
+			}
+			try
+			{
+				sentencia.close();
+			}
+			catch(SQLException e)
+			{
+				//e.printStackTrace();
+			}
+			try
+			{
+				conexion.close();
+			}
+			catch(SQLException e)
+			{
+				//e.printStackTrace();
+			}
+		}
+		
+		return inter;
+	}
+	
+	
+	
+	/**
+	 * cabecera: void pintarIntervencionesEnPantalla(File f)
+	 * comentario: metodo para pintar las intervenciones existentes en un archivo en pantalla
+	 * precondiciones: el fichero debe existir
+	 * entrada: un objeto tipo File
+	 * e/s: nada
+	 * salida: nada
+	 * postcondiciones: nada, pinta en pantalla las intervenciones guardados en el fichero
+	 */
+	public void pintarIntervencionesDePaciente(int numero)
+	{
+		Connection conexionBBDD = null;
+		Statement sentencia = null;
+		ResultSet resultado = null;
+		
+		String comando="select id, numeroseguridadsocialpaciente, numerocolegiadomedico, fecha, descripcion from Intervenciones where numeroseguridadsocialpaciente="+numero;
+		
+		try
+		{
+			conexionBBDD = DriverManager.getConnection(sourceURL, this.usuario, this.contrasenia);
+			sentencia = conexionBBDD.createStatement();
+			resultado = sentencia.executeQuery(comando);
+			
+			while(resultado.next())
+			{
+				System.out.println(resultado.getInt("id")+", "+resultado.getInt("numeroseguridadsocialpaciente")+", "+
+						resultado.getInt("numerocolegiadomedico")+", "+resultado.getDate("fecha")+", "+resultado.getString("descripcion"));
+				
+			}
+		}
+		catch(SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	
+}

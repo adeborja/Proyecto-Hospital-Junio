@@ -1,0 +1,13 @@
+package Hospital;
+
+public class conductorMetodosValidacion {
+	public static void main(String[] args){
+		
+		int codigo = -11;
+		
+		codigo = MetodosValidacion.validarUsuario(945765, "123");
+		System.out.println(codigo);
+		
+		
+	}
+}
